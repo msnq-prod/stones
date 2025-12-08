@@ -5,10 +5,12 @@ import { Earth } from './components/Earth'
 import { Markers } from './components/Markers'
 import { CameraController } from './components/CameraController'
 import { UIOverlay } from './components/UIOverlay'
+import { AboutSection } from './components/AboutSection'
+import { ProductListSection } from './components/ProductListSection'
 import { useStore } from './store'
 
 function Scene() {
-  const viewMode = useStore((state) => state.viewMode)
+  const selectedLocation = useStore((state) => state.selectedLocation)
 
   return (
     <>
@@ -22,18 +24,13 @@ function Scene() {
 
       <CameraController />
 
-      {/* 
-        We use OrbitControls for the base interaction (rotation).
-        When viewMode is LOCATION (zoomed in), we disable rotation so the user feels "locked in" 
-        or focused on the location. CameraController takes over for positioning.
-      */}
       <OrbitControls
         enablePan={false}
-        enableZoom={viewMode === 'WORLD'}
-        enableRotate={viewMode === 'WORLD'}
-        minDistance={1.8}
-        maxDistance={10}
+        enableZoom={false} // Disable user zoom
+        enableRotate={true}
         rotateSpeed={0.5}
+        autoRotate={!selectedLocation} // Auto rotate if nothing selected
+        autoRotateSpeed={0.5}
       />
     </>
   )
@@ -64,21 +61,46 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
 function App() {
   const fetchLocations = useStore((state) => state.fetchLocations)
+  const selectedLocation = useStore((state) => state.selectedLocation)
 
   useEffect(() => {
     fetchLocations()
   }, [])
 
+  // Scroll to products when location is selected
+  useEffect(() => {
+    if (selectedLocation) {
+      const el = document.getElementById('products');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [selectedLocation])
+
   return (
-    <div className="w-full h-screen bg-black relative">
-      <ErrorBoundary>
-        <Canvas camera={{ position: [0, 0, 3.5], fov: 45 }}>
-          <Suspense fallback={null}>
-            <Scene />
-          </Suspense>
-        </Canvas>
-      </ErrorBoundary>
-      <UIOverlay />
+    <div className="relative w-full min-h-screen bg-black">
+      {/* Fixed Background Layer */}
+      <div className="fixed inset-0 z-0">
+        <ErrorBoundary>
+          <Canvas camera={{ position: [0, 0, 3.5], fov: 45 }}>
+            <Suspense fallback={null}>
+              <Scene />
+            </Suspense>
+          </Canvas>
+        </ErrorBoundary>
+      </div>
+
+      {/* Scrollable Content Layer - Pass clicks through where empty */}
+      <div className="relative z-10 pointer-events-none">
+        <UIOverlay /> {/* Header stays fixed inside overlay or we move it out. UIOverlay is fixed. */}
+
+        {/* Spacer for the "Hero" globe view */}
+        <div className="h-screen pointer-events-none" />
+
+        {/* Sections */}
+        <ProductListSection />
+        <AboutSection />
+      </div>
     </div>
   )
 }

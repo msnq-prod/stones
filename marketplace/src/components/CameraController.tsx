@@ -8,11 +8,11 @@ export function CameraController() {
     const viewMode = useStore((state) => state.viewMode)
 
     useFrame((state, delta) => {
-        if (selectedLocation && viewMode === 'LOCATION') {
-            // Zoom to location
+        if (selectedLocation) {
+            // Rotate to face location, but keep distance
             const phi = (90 - selectedLocation.lat) * (Math.PI / 180)
             const theta = (selectedLocation.lng + 180) * (Math.PI / 180)
-            const distance = 1.6 // Zoom level
+            const distance = 3.5 // Keep original distance (no zoom in)
 
             const x = -(distance * Math.sin(phi) * Math.cos(theta))
             const z = (distance * Math.sin(phi) * Math.sin(theta))
@@ -22,17 +22,17 @@ export function CameraController() {
 
             // Smoothly move camera
             easing.damp3(state.camera.position, targetPos, 0.5, delta)
-
-            // Ensure camera looks at center
             state.camera.lookAt(0, 0, 0)
         } else {
-            // Default orbit position (if returning from zoom)
-            // Ideally we'd let orbit controls handle this, but for smooth transition back:
-            if (state.camera.position.length() < 2.5) {
-                const targetPos = state.camera.position.clone().normalize().multiplyScalar(3.5)
-                easing.damp3(state.camera.position, targetPos, 1.5, delta)
-                state.camera.lookAt(0, 0, 0)
-            }
+            // If nothing selected, maybe just let it float or return to default?
+            // Since autoRotate is on in OrbitControls, we might not need to force position if not selected.
+            // But if we want to reset:
+            /*
+           if (state.camera.position.length() < 3.4) {
+               const targetPos = state.camera.position.clone().normalize().multiplyScalar(3.5)
+               easing.damp3(state.camera.position, targetPos, 1.5, delta)
+           }
+           */
         }
     })
 
