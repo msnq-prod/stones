@@ -9,19 +9,8 @@ export function ProductListSection() {
     if (!selectedLocation) return null;
 
     return (
-        <section id="products" className="relative z-10 w-full min-h-screen bg-gradient-to-b from-transparent to-black text-white pt-20 px-6 pb-20 pointer-events-auto">
+        <section id="products" className="relative z-10 w-full min-h-screen bg-black/30 backdrop-blur-md border-t border-white/10 text-white pt-20 px-6 pb-20 pointer-events-auto">
             <div className="max-w-6xl mx-auto">
-                <div className="mb-16 text-center">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        className="text-5xl md:text-7xl font-light mb-4"
-                    >
-                        {selectedLocation.name}
-                    </motion.h2>
-                    <p className="text-xl text-blue-400 font-mono tracking-widest uppercase">{selectedLocation.country}</p>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {selectedLocation.products.map((product) => (
                         <ProductCard key={product.id} product={product} addToCart={addToCart} />

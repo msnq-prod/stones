@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MOCK_USER } from './data/db';
+import { MOCK_USER, LOCATIONS } from './data/db';
 import type { Location, User, Product } from './data/db';
 
 interface AppState {
@@ -49,11 +49,13 @@ export const useStore = create<AppState>((set) => ({
         set({ isLoading: true });
         try {
             const res = await fetch('/api/locations');
+            if (!res.ok) throw new Error('API error');
             const data = await res.json();
             set({ locations: data, isLoading: false });
         } catch (error) {
-            console.error(error);
-            set({ isLoading: false });
+            console.error('API unavailable, using mock data:', error);
+            // Fallback to mock locations when API is unavailable
+            set({ locations: LOCATIONS, isLoading: false });
         }
     }
 }));

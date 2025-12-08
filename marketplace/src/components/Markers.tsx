@@ -1,7 +1,14 @@
 import type { Location } from '../data/db'
 import { useStore } from '../store'
 import * as THREE from 'three'
-import { useState } from 'react'
+import React, { useMemo, useRef, useState, useEffect } from 'react'
+import { Billboard, Html } from '@react-three/drei'
+
+// Geometry for the flat circle (2D billboard)
+const markerGeometry = new THREE.CircleGeometry(0.02, 16)
+const defaultMaterial = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.8 })
+const hoveredMaterial = new THREE.MeshBasicMaterial({ color: '#ffaa00', transparent: true, opacity: 1 })
+const selectedMaterial = new THREE.MeshBasicMaterial({ color: '#ff0000', transparent: true, opacity: 1 })
 
 export function Markers() {
     const selectLocation = useStore((state) => state.selectLocation)
@@ -22,33 +29,62 @@ export function Markers() {
     )
 }
 
-function Marker({ location, onClick, isSelected }: { location: Location, onClick: () => void, isSelected: boolean }) {
+const Marker = React.memo(function Marker({
+    location,
+    onClick,
+    isSelected
+}: {
+    location: Location,
+    onClick: () => void,
+    isSelected: boolean
+}) {
+    const meshRef = useRef<THREE.Mesh>(null)
     const [hovered, setHover] = useState(false)
 
-    // Convert Lat/Lng to 3D position
-    // Lat: 90 (North) to -90 (South) -> Phi: 0 to 180
-    // Lng: -180 to 180 -> Theta: 0 to 360
-    const phi = (90 - location.lat) * (Math.PI / 180)
-    const theta = (location.lng + 180) * (Math.PI / 180)
-    const radius = 1.02 // Slightly above surface
+    // Calculate position on sphere
+    const position = useMemo(() => {
+        const phi = (90 - location.lat) * (Math.PI / 180)
+        const theta = (location.lng + 180) * (Math.PI / 180)
+        const radius = 1.02 // Slightly above surface
 
-    const x = -(radius * Math.sin(phi) * Math.cos(theta))
-    const z = (radius * Math.sin(phi) * Math.sin(theta))
-    const y = (radius * Math.cos(phi))
+        const x = -(radius * Math.sin(phi) * Math.cos(theta))
+        const z = (radius * Math.sin(phi) * Math.sin(theta))
+        const y = (radius * Math.cos(phi))
 
-    // Scale marker on hover or selection
-    const scale = isSelected || hovered ? 1.5 : 1
+        return new THREE.Vector3(x, y, z)
+    }, [location.lat, location.lng])
+
+    useEffect(() => {
+        if (meshRef.current) {
+            const scale = isSelected || hovered ? 1.5 : 1
+            meshRef.current.scale.setScalar(scale)
+        }
+    }, [isSelected, hovered])
+
+    const material = isSelected ? selectedMaterial : (hovered ? hoveredMaterial : defaultMaterial)
 
     return (
-        <mesh
-            position={[x, y, z]}
-            onClick={(e) => { e.stopPropagation(); onClick() }}
-            onPointerOver={() => setHover(true)}
-            onPointerOut={() => setHover(false)}
-            scale={scale}
-        >
-            <sphereGeometry args={[0.02, 16, 16]} />
-            <meshBasicMaterial color={isSelected ? "#ff0000" : (hovered ? "#ffaa00" : "#ffffff")} />
-        </mesh>
+        <group position={position}>
+            {/* Billboard ensures the flat circle always faces the camera */}
+            <Billboard>
+                <mesh
+                    ref={meshRef}
+                    geometry={markerGeometry}
+                    material={material}
+                    onClick={(e) => { e.stopPropagation(); onClick() }}
+                    onPointerOver={() => setHover(true)}
+                    onPointerOut={() => setHover(false)}
+                />
+            </Billboard>
+
+            {/* Tooltip on hover */}
+            {hovered && !isSelected && (
+                <Html position={[0, 0.05, 0]} center pointerEvents="none">
+                    <div className="px-2 py-1 bg-black/80 text-white text-xs rounded border border-white/20 whitespace-nowrap backdrop-blur-sm">
+                        {location.name}
+                    </div>
+                </Html>
+            )}
+        </group>
     )
-}
+})

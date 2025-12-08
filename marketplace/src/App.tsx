@@ -1,12 +1,16 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import React, { Suspense, useEffect } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Earth } from './components/Earth'
 import { Markers } from './components/Markers'
 import { CameraController } from './components/CameraController'
 import { UIOverlay } from './components/UIOverlay'
 import { AboutSection } from './components/AboutSection'
 import { ProductListSection } from './components/ProductListSection'
+import { LocationInfoSection } from './components/LocationInfoSection'
+import { LoadingScreen } from './components/LoadingScreen'
+import { AdminPage } from './components/AdminPage'
 import { useStore } from './store'
 
 function Scene() {
@@ -26,10 +30,10 @@ function Scene() {
 
       <OrbitControls
         enablePan={false}
-        enableZoom={false} // Disable user zoom
+        enableZoom={false}
         enableRotate={true}
         rotateSpeed={0.5}
-        autoRotate={!selectedLocation} // Auto rotate if nothing selected
+        autoRotate={!selectedLocation}
         autoRotateSpeed={0.5}
       />
     </>
@@ -59,27 +63,36 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-function App() {
+function MainApp() {
   const fetchLocations = useStore((state) => state.fetchLocations)
   const selectedLocation = useStore((state) => state.selectedLocation)
+  const [showOverview, setShowOverview] = React.useState(true)
 
   useEffect(() => {
     fetchLocations()
   }, [])
 
-  // Scroll to products when location is selected
   useEffect(() => {
     if (selectedLocation) {
+      // When entering a location
+      setShowOverview(false)
       const el = document.getElementById('products');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       }
+    } else {
+      // When returning to orbit
+      window.scrollTo({ top: 0, behavior: 'instant' }); // Instant scroll to top
+      // Delay showing About text so it fades/appears nicely after zoom out starts
+      const timer = setTimeout(() => setShowOverview(true), 600);
+      return () => clearTimeout(timer);
     }
   }, [selectedLocation])
 
   return (
     <div className="relative w-full min-h-screen bg-black">
-      {/* Fixed Background Layer */}
+      <LoadingScreen />
+
       <div className="fixed inset-0 z-0">
         <ErrorBoundary>
           <Canvas camera={{ position: [0, 0, 3.5], fov: 45 }}>
@@ -90,18 +103,32 @@ function App() {
         </ErrorBoundary>
       </div>
 
-      {/* Scrollable Content Layer - Pass clicks through where empty */}
       <div className="relative z-10 pointer-events-none">
-        <UIOverlay /> {/* Header stays fixed inside overlay or we move it out. UIOverlay is fixed. */}
+        <UIOverlay />
 
-        {/* Spacer for the "Hero" globe view */}
         <div className="h-screen pointer-events-none" />
 
-        {/* Sections */}
-        <ProductListSection />
-        <AboutSection />
+        {selectedLocation ? (
+          <>
+            <LocationInfoSection />
+            <ProductListSection />
+          </>
+        ) : (
+          showOverview && <AboutSection /> // Only show after delay
+        )}
       </div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

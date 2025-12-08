@@ -40,14 +40,93 @@ app.get('/api/user', async (req, res) => {
 
 // Cart
 app.get('/api/cart', async (req, res) => {
-    // For simplicity, returning mock cart or implementing persistent cart
-    // Ideally we relate cart items to user. For now, let's just use memory or a simple table if needed.
-    // The current task just requested DB for *locations and products*. Cart persistence wasn't strictly asked but "full stack" implies it.
-    // I'll skip complex cart persistence for the moment to focus on the main requirement: EDITING DB via DBeaver.
-    // So Cart can remain client-side for this beta, OR I can implement it in next step.
-    // Let's keep Cart client-side in store for now to ensure MVP stability, 
-    // but allow Locations/Products to be dynamic.
     res.json([]);
+});
+
+// ===== ADMIN API =====
+
+// Create location
+app.post('/api/locations', async (req, res) => {
+    try {
+        const { name, country, lat, lng } = req.body;
+        const location = await prisma.location.create({
+            data: { name, country, lat, lng }
+        });
+        res.json(location);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create location' });
+    }
+});
+
+// Update location
+app.put('/api/locations/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, country, lat, lng } = req.body;
+        const location = await prisma.location.update({
+            where: { id },
+            data: { name, country, lat, lng }
+        });
+        res.json(location);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update location' });
+    }
+});
+
+// Delete location
+app.delete('/api/locations/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.location.delete({ where: { id } });
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete location' });
+    }
+});
+
+// Create product
+app.post('/api/products', async (req, res) => {
+    try {
+        const { name, description, price, image, category, locationId } = req.body;
+        const product = await prisma.product.create({
+            data: { name, description, price, image, category, locationId }
+        });
+        res.json(product);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create product' });
+    }
+});
+
+// Update product
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, image, category, locationId } = req.body;
+        const product = await prisma.product.update({
+            where: { id },
+            data: { name, description, price, image, category, locationId }
+        });
+        res.json(product);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
+// Delete product
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.product.delete({ where: { id } });
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
 });
 
 app.listen(port, () => {
