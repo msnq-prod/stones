@@ -6,7 +6,7 @@ import { CameraController } from './CameraController'
 import { useStore } from '../store'
 
 export function Scene() {
-    const selectedProduct = useStore((state) => state.selectedProduct)
+    const selectedLocation = useStore((state) => state.selectedLocation)
 
     return (
         <>
@@ -14,8 +14,8 @@ export function Scene() {
             <CameraController />
             <OrbitControls
                 enablePan={false}
-                enableZoom={!selectedProduct} // Disable zoom when locked
-                enableRotate={!selectedProduct} // Disable rotate when locked
+                enableZoom={!selectedLocation} // Disable zoom when locked
+                enableRotate={!selectedLocation} // Disable rotate when locked
                 minDistance={1.5}
                 maxDistance={10}
                 rotateSpeed={0.5}

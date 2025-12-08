@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { Billboard } from '@react-three/drei'
-import { products, useStore } from '../store'
+import { useStore } from '../store'
+import { locations } from '../data'
+import type { Location } from '../data'
 
 // Helper to convert Lat/Lng to Vector3 on a sphere
 function latLngToVector3(lat: number, lng: number, radius: number): THREE.Vector3 {
@@ -15,9 +17,9 @@ function latLngToVector3(lat: number, lng: number, radius: number): THREE.Vector
     return new THREE.Vector3(x, y, z)
 }
 
-function Marker({ product, radius }: { product: typeof products[0], radius: number }) {
-    const position = useMemo(() => latLngToVector3(product.lat, product.lng, radius), [product, radius])
-    const setSelectedProduct = useStore((state) => state.setSelectedProduct)
+function Marker({ location, radius }: { location: Location, radius: number }) {
+    const position = useMemo(() => latLngToVector3(location.lat, location.lng, radius), [location, radius])
+    const setSelectedLocation = useStore((state) => state.setSelectedLocation)
     const [hovered, setHovered] = useState(false)
 
     return (
@@ -25,7 +27,7 @@ function Marker({ product, radius }: { product: typeof products[0], radius: numb
             <mesh
                 onClick={(e) => {
                     e.stopPropagation() // Prevent click from passing through to globe
-                    setSelectedProduct(product)
+                    setSelectedLocation(location)
                 }}
                 onPointerOver={() => {
                     setHovered(true)
@@ -57,9 +59,10 @@ export function Markers() {
 
     return (
         <group>
-            {products.map((product) => (
-                <Marker key={product.id} product={product} radius={radius} />
+            {locations.map((location) => (
+                <Marker key={location.id} location={location} radius={radius} />
             ))}
         </group>
     )
 }
+

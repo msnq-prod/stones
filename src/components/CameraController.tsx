@@ -4,15 +4,15 @@ import { useStore } from '../store'
 import { easing } from 'maath'
 
 export function CameraController() {
-    const selectedProduct = useStore((state) => state.selectedProduct)
+    const selectedLocation = useStore((state) => state.selectedLocation)
 
     useFrame((state, delta) => {
-        // If a product is selected, zoom in to it
-        if (selectedProduct) {
-            // Calculate target position based on product lat/lng
+        // If a location is selected, zoom in to it
+        if (selectedLocation) {
+            // Calculate target position based on location lat/lng
             // We want to be slightly above the surface at the location
-            const phi = (90 - selectedProduct.lat) * (Math.PI / 180)
-            const theta = (selectedProduct.lng + 180) * (Math.PI / 180)
+            const phi = (90 - selectedLocation.lat) * (Math.PI / 180)
+            const theta = (selectedLocation.lng + 180) * (Math.PI / 180)
 
             // Target camera distance from center (radius 1 + distance)
             const distance = 1.8
@@ -51,3 +51,4 @@ export function CameraController() {
 
     return null
 }
+

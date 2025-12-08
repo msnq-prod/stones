@@ -1,14 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../../store'
-import { ProductCard } from './ProductCard'
+import { LocationDetails } from './LocationDetails'
 
 export function UI() {
-    const selectedProduct = useStore((state) => state.selectedProduct)
+    const selectedLocation = useStore((state) => state.selectedLocation)
 
     return (
         <>
             <AnimatePresence>
-                {!selectedProduct && (
+                {!selectedLocation && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -33,7 +33,9 @@ export function UI() {
             </AnimatePresence>
 
             <AnimatePresence>
-                {selectedProduct && <ProductCard />}
+                {selectedLocation && (
+                    <LocationDetails />
+                )}
             </AnimatePresence>
         </>
     )

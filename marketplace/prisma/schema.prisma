@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Location {
+  id        String    @id @default(uuid())
+  name      String
+  country   String
+  lat       Float
+  lng       Float
+  products  Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  image       String
+  category    String
+  locationId  String
+  location    Location @relation(fields: [locationId], references: [id])
+}
+
+model User {
+  id    String @id @default(uuid())
+  name  String
+  email String
+}
+
+model CartItem {
+  id        String  @id @default(uuid())
+  productId String
+  quantity  Int     @default(1)
+}
