@@ -64,25 +64,25 @@ export function UIOverlay() {
                                 clearSelection()
                                 setActiveView('MARKET')
                             }}
-                            className={`text - sm tracking - widest transition - colors ${activeView === 'MARKET' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'} `}
+                            className={`text-sm tracking-widest transition-colors ${activeView === 'MARKET' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'}`}
                         >
                             {t.marketplace}
                         </button>
                         <button
                             onClick={() => setActiveView('PRODUCTS')}
-                            className={`text - sm tracking - widest transition - colors ${activeView === 'PRODUCTS' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'} `}
+                            className={`text-sm tracking-widest transition-colors ${activeView === 'PRODUCTS' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'}`}
                         >
                             {t.products}
                         </button>
                         <button
                             onClick={() => setActiveView('MUSEUMS')}
-                            className={`text - sm tracking - widest transition - colors ${activeView === 'MUSEUMS' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'} `}
+                            className={`text-sm tracking-widest transition-colors ${activeView === 'MUSEUMS' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'}`}
                         >
                             {t.museums}
                         </button>
                         <button
                             onClick={() => setActiveView('CONTACTS')}
-                            className={`text - sm tracking - widest transition - colors ${activeView === 'CONTACTS' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'} `}
+                            className={`text-sm tracking-widest transition-colors ${activeView === 'CONTACTS' ? 'text-blue-400 font-bold' : 'text-gray-400 hover:text-white'}`}
                         >
                             {t.contacts}
                         </button>
@@ -108,7 +108,7 @@ export function UIOverlay() {
                                             setLanguage(lang.id);
                                             setShowLangMenu(false);
                                         }}
-                                        className={`w - full text - left px - 4 py - 2 text - sm hover: bg - white / 20 transition - colors ${language === lang.id ? 'text-white bg-white/10' : 'text-gray-400'} `}
+                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-white/20 transition-colors ${language === lang.id ? 'text-white bg-white/10' : 'text-gray-400'}`}
                                     >
                                         {lang.name}
                                     </button>
@@ -119,13 +119,13 @@ export function UIOverlay() {
 
                     <button
                         onClick={() => setActiveView('ACCOUNT')}
-                        className={`text - sm font - medium transition - colors ${activeView === 'ACCOUNT' ? 'text-blue-400' : 'text-white hover:text-blue-400'} `}
+                        className={`text-sm font-medium transition-colors ${activeView === 'ACCOUNT' ? 'text-blue-400' : 'text-white hover:text-blue-400'}`}
                     >
                         {t.account}
                     </button>
                     <button
                         onClick={() => setActiveView('CART')}
-                        className={`text - sm font - medium transition - colors ${activeView === 'CART' ? 'text-blue-400' : 'text-white hover:text-blue-400'} `}
+                        className={`text-sm font-medium transition-colors ${activeView === 'CART' ? 'text-blue-400' : 'text-white hover:text-blue-400'}`}
                     >
                         {t.cart} ({cart.length})
                     </button>
@@ -353,13 +353,13 @@ function RotatingFilter({
             {/* Large Arrow Controls */}
             <button
                 onClick={handlePrev}
-                className={`absolute left - 4 top - 1 / 2 ml - 4 - translate - y - 1 / 2 z - 20 text - white / 20 hover: text - white transition - colors text - 6xl font - thin select - none`}
+                className="absolute left-4 top-1/2 ml-4 -translate-y-1/2 z-20 text-white/20 hover:text-white transition-colors text-6xl font-thin select-none"
             >
                 ‹
             </button>
             <button
                 onClick={handleNext}
-                className={`absolute right - 4 top - 1 / 2 mr - 4 - translate - y - 1 / 2 z - 20 text - white / 20 hover: text - white transition - colors text - 6xl font - thin select - none`}
+                className="absolute right-4 top-1/2 mr-4 -translate-y-1/2 z-20 text-white/20 hover:text-white transition-colors text-6xl font-thin select-none"
             >
                 ›
             </button>
@@ -367,7 +367,7 @@ function RotatingFilter({
             <div className="relative h-24 w-full overflow-hidden flex justify-center perspective-1000" style={{ perspective: '1000px', maskImage: 'linear-gradient(to right, transparent, black 20%, black 80%, transparent)' }}>
                 <motion.div
                     className="relative cursor-grab active:cursor-grabbing w-full h-full flex items-center justify-center transform-style-3d"
-                    style={{ transformStyle: 'preserve-3d', rotateY: x }}
+                    style={{ transformStyle: 'preserve-3d', rotateY: x, z: -RADIUS }}
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }} // Constraints handled by logic, but this allows dragging
                     dragElastic={0.001} // Feel
@@ -431,11 +431,12 @@ function RotatingItem({
         return Math.max(0, 1 - (dist / 25)); // Fade out fast
     });
 
-    const scale = useTransform(parentRotation, (latest: number) => {
+    const transform = useTransform(parentRotation, (latest: number) => {
         const worldAngle = angle + latest;
         const dist = Math.abs(worldAngle);
-        // Scale: 1.3 at 0, 1 at dist
-        return 1 + Math.max(0, (1 - dist / 20) * 0.4);
+        // Scale logic integrated here
+        const s = 1 + Math.max(0, (1 - dist / 20) * 0.4);
+        return `rotateY(${angle}deg) translateZ(${radius}px) scale(${s})`;
     });
 
     const zIndex = useTransform(parentRotation, (latest: number) => {
@@ -466,10 +467,8 @@ function RotatingItem({
         <motion.div
             className="absolute top-1/2 left-1/2 -ml-[60px] -mt-[20px] w-[120px] h-[40px] flex items-center justify-center select-none"
             style={{
-                rotateY: angle, // Static relative to parent
-                z: radius,
+                transform: transform,
                 opacity: opacity,
-                scale: scale,
                 zIndex: zIndex,
             }}
             onClick={onClick}
@@ -526,6 +525,10 @@ function ProductsView({ onClose }: { onClose: () => void }) {
         setFilteredProducts(result);
     }, [selectedLocation, selectedLevel, locations]);
 
+    // Find selected location for background image
+    const locationData = locations.find(l => l.name === selectedLocation);
+    const backgroundImage = locationData ? locationData.image : null;
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -533,7 +536,24 @@ function ProductsView({ onClose }: { onClose: () => void }) {
             exit={{ opacity: 0, scale: 0.95 }}
             className="absolute inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col pointer-events-auto overflow-hidden"
         >
-            <div className="flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-10">
+            {/* Dynamic Background */}
+            <AnimatePresence mode="popLayout">
+                {backgroundImage && (
+                    <motion.div
+                        key={backgroundImage}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.4 }} // Keeping it subtle
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1 }}
+                        className="absolute inset-0 z-0"
+                    >
+                        <img src={backgroundImage} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <div className="flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-10 relative">
                 <div className="flex items-center gap-4">
                     <h2 className="text-3xl font-light tracking-widest text-white">ORBITAL PRODUCTS</h2>
                     <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">{filteredProducts.length} ITEMS</span>
@@ -541,24 +561,25 @@ function ProductsView({ onClose }: { onClose: () => void }) {
                 <button onClick={onClose} className="text-gray-400 hover:text-white text-lg">✕ CLOSE</button>
             </div>
 
-            {/* Filters Section - 3D Carousels */}
-            <div className="relative z-0 bg-gradient-to-b from-transparent via-blue-900/5 to-transparent py-4 space-y-4 overflow-visible" style={{ perspective: '1000px' }}>
-                <RotatingFilter
-                    label="Filter by Location"
-                    items={locationItems}
-                    value={selectedLocation}
-                    onChange={setSelectedLocation}
-                />
-                <RotatingFilter
-                    label="Filter by Level"
-                    items={levelItems}
-                    value={selectedLevel}
-                    onChange={setSelectedLevel}
-                />
-            </div>
-
-            {/* Products Grid */}
+            {/* Scrollable Content Container */}
             <div className="flex-1 overflow-y-auto px-6 pb-10 z-10 relative">
+                {/* Filters Section - 3D Carousels (Now inside scrollable area) */}
+                <div className="relative z-0 py-4 space-y-4 overflow-visible mb-8" style={{ perspective: '1000px' }}>
+                    <RotatingFilter
+                        label="Filter by Location"
+                        items={locationItems}
+                        value={selectedLocation}
+                        onChange={setSelectedLocation}
+                    />
+                    <RotatingFilter
+                        label="Filter by Level"
+                        items={levelItems}
+                        value={selectedLevel}
+                        onChange={setSelectedLevel}
+                    />
+                </div>
+
+                {/* Products Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {filteredProducts.length === 0 ? (
                         <div className="col-span-full text-center text-gray-500 py-20">
@@ -566,14 +587,14 @@ function ProductsView({ onClose }: { onClose: () => void }) {
                         </div>
                     ) : (
                         filteredProducts.map((product) => (
-                            <div key={product.id} className="bg-neutral-900 border border-white/10 rounded-xl overflow-hidden group hover:border-blue-500/50 transition-colors">
+                            <div key={product.id} className="bg-neutral-900/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden group hover:border-blue-500/50 transition-colors">
                                 <div className="h-48 overflow-hidden relative">
                                     <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                     <div className="absolute top-2 right-2">
-                                        <span className={`px - 2 py - 1 rounded text - [10px] font - bold uppercase tracking - wider ${(product.level || 1) === 3 ? 'bg-yellow-500 text-black' :
-                                                (product.level || 1) === 2 ? 'bg-blue-500 text-white' :
-                                                    'bg-gray-500 text-white'
-                                            } `}>
+                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${(product.level || 1) === 3 ? 'bg-yellow-500 text-black' :
+                                            (product.level || 1) === 2 ? 'bg-blue-500 text-white' :
+                                                'bg-gray-500 text-white'
+                                            }`}>
                                             LVL {product.level || 1}
                                         </span>
                                     </div>
