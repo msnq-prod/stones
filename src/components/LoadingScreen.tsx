@@ -47,6 +47,7 @@ export function LoadingScreen() {
                                     fill="transparent"
                                     className="text-blue-500"
                                     strokeDasharray={circumference}
+                                    initial={{ strokeDashoffset: circumference }}
                                     animate={{ strokeDashoffset }}
                                     transition={{ duration: 0.5 }}
                                     strokeLinecap="round"

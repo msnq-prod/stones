@@ -81,7 +81,7 @@ export const LOCATIONS: Location[] = [
         country: 'Iceland',
         lat: 64.9631,
         lng: -19.0208,
-        image: 'https://placehold.co/800x600/101010/ffffff?text=Crystal+Caves',
+        image: '/locations/crystal_caves.jpg',
         description: 'Glimmering subterranean caverns filled with rare minerals and bioluminescent flora.',
         products: [PRODUCTS[0]]
     },
@@ -91,7 +91,7 @@ export const LOCATIONS: Location[] = [
         country: 'Egypt',
         lat: 26.8206,
         lng: 30.8025,
-        image: 'https://placehold.co/800x600/C2B280/000000?text=Sahara',
+        image: '/locations/sahara_outpost.jpg',
         description: 'A remote trading station amidst the endless dunes, known for ancient relics.',
         products: [PRODUCTS[1], PRODUCTS[4]]
     },
@@ -101,7 +101,7 @@ export const LOCATIONS: Location[] = [
         country: 'Nepal',
         lat: 28.3949,
         lng: 84.1240,
-        image: 'https://placehold.co/800x600/ffffff/000000?text=Himalayas',
+        image: '/locations/himalayan_peaks.jpg',
         description: 'The roof of the world, where rare spices and spiritual artifacts are found.',
         products: [PRODUCTS[2]]
     },
@@ -111,7 +111,7 @@ export const LOCATIONS: Location[] = [
         country: 'Japan',
         lat: 35.0116,
         lng: 135.7681,
-        image: 'https://placehold.co/800x600/ffb7c5/000000?text=Kyoto',
+        image: '/locations/kyoto_village.jpg',
         description: 'A traditional village preserving centuries-old craftsmanship and ceramics.',
         products: [PRODUCTS[3]]
     },
@@ -121,7 +121,7 @@ export const LOCATIONS: Location[] = [
         country: 'Brazil',
         lat: -3.4653,
         lng: -62.2159,
-        image: 'https://placehold.co/800x600/006400/ffffff?text=Amazon',
+        image: '/locations/amazon_rainforest.jpg',
         description: 'A dense, vibrant jungle teeming with exotic life and hidden treasures.',
         products: [PRODUCTS[2], PRODUCTS[0]]
     }

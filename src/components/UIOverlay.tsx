@@ -24,9 +24,16 @@ export function UIOverlay() {
 
     useEffect(() => {
         fetch('/api/languages')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Network response was not ok');
+                return res.json();
+            })
             .then(data => setLanguages(data.filter((l: any) => l.available)))
-            .catch(err => console.error('Failed to load languages', err));
+            .catch(err => {
+                console.warn('Failed to load languages (backend might be offline or outdated):', err);
+                // Fallback or empty
+                setLanguages([]);
+            });
     }, []);
 
     // Translation dictionary for static UI
@@ -42,7 +49,7 @@ export function UIOverlay() {
         },
         2: { // Russian
             marketplace: 'МАРКЕТПЛЕЙС',
-            products: 'ПРОДУКТЫ',
+            products: 'ТОВАРЫ',
             museums: 'МУЗЕИ',
             contacts: 'КОНТАКТЫ',
             account: 'АККАУНТ',
@@ -269,8 +276,8 @@ function RotatingFilter({
     const x = useMotionValue(0);
 
     // Configuration
-    const ITEM_WIDTH = 140; // Approx width of an item
-    const GAP = 20;
+    const ITEM_WIDTH = 200; // Approx width of an item
+    const GAP = 60;
     const RADIUS = 800; // Large radius for "arc" effect
     const VISIBLE_ITEMS = 5; // How many items to render on each side
     // Angle per item based on arc length on the large circle
@@ -353,13 +360,13 @@ function RotatingFilter({
             {/* Large Arrow Controls */}
             <button
                 onClick={handlePrev}
-                className="absolute left-4 top-1/2 ml-4 -translate-y-1/2 z-20 text-white/20 hover:text-white transition-colors text-6xl font-thin select-none"
+                className="absolute left-0 top-0 h-full w-32 z-20 flex items-center justify-start pl-4 text-white/20 hover:text-white transition-colors text-6xl font-thin select-none outline-none"
             >
                 ‹
             </button>
             <button
                 onClick={handleNext}
-                className="absolute right-4 top-1/2 mr-4 -translate-y-1/2 z-20 text-white/20 hover:text-white transition-colors text-6xl font-thin select-none"
+                className="absolute right-0 top-0 h-full w-32 z-20 flex items-center justify-end pr-4 text-white/20 hover:text-white transition-colors text-6xl font-thin select-none outline-none"
             >
                 ›
             </button>
@@ -376,7 +383,7 @@ function RotatingFilter({
                     onDrag={(e, info) => {
                         // Map pixel delta to rotation delta?
                         // 1px drag = 1/RADIUS radians.
-                        const angleDelta = -(info.delta.x / RADIUS) * (180 / Math.PI) * 2; // Speed up a bit
+                        const angleDelta = (info.delta.x / RADIUS) * (180 / Math.PI) * 2; // Speed up a bit
                         x.set(x.get() + angleDelta);
                     }}
                     onDragEnd={handleDragEnd}
@@ -526,8 +533,13 @@ function ProductsView({ onClose }: { onClose: () => void }) {
     }, [selectedLocation, selectedLevel, locations]);
 
     // Find selected location for background image
-    const locationData = locations.find(l => l.name === selectedLocation);
-    const backgroundImage = locationData ? locationData.image : null;
+    let backgroundImage: string | null = null;
+    if (selectedLocation === 'ALL') {
+        backgroundImage = '/locations/all.jpg';
+    } else {
+        const locationData = locations.find(l => l.name === selectedLocation);
+        backgroundImage = locationData?.image ?? null;
+    }
 
     return (
         <motion.div

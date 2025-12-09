@@ -21,6 +21,8 @@ model Location {
   country_5 String?
   lat       Float
   lng       Float
+  image     String?
+  description String?
   products  Product[]
 }
 

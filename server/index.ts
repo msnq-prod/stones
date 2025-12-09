@@ -4,6 +4,10 @@ import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 const app = express();
@@ -11,13 +15,30 @@ const port = 3001;
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, '../public/uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+const locationsDir = path.join(__dirname, '../public/locations');
+
+[uploadDir, locationsDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
+        // If locationName is present in body (parsed by multer before file if fields come first, but standard multer processing order might be tricky with form-data order. 
+        // Note: Multer processes fields in order. For destination to see body fields, they must be sent BEFORE the file field in FormData.)
+        // However, standard multer `destination` and `filename` functions have access to `req.body`, but ONLY if the text fields are transmitted before the file field.
+        // We will optimistically assume frontend sends locationName first or handle it if possible.
+        // Actually, for robust handling, we might just default to uploads and then move/rename if needed, OR enforce frontend order.
+        // Let's rely on frontend appending 'locationName' first? But we modified frontend to append it AFTER. 
+        // JS FormData order is insertion order usually, so if we append 'locationName' after 'image', it might not be available here.
+        // Wait, good catch. Let's fix frontend order in next step if verification fails, or just note it.
+        // Actually, let's look at `req.body` in `destination`.
+        // To be safe, let's just stick to default uploadDir here, and move the file in the route handler. 
+        // OR better: Just put everything in 'uploads' temporarily if we want, or just check req.body.
+        // Let's modify the route handler to handle the move/rename logic completely to avoid multer timing issues.
+        // So here we keep it simple or default.
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
@@ -49,9 +70,38 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    // Return the URL path relative to the public directory
-    const imageUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: imageUrl });
+
+    let finalPath = `/uploads/${req.file.filename}`;
+
+    // Handle renaming if locationName is provided
+    const { locationName } = req.body;
+    if (locationName) {
+        // Simple slugify
+        const slug = locationName
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '') // remove non-word chars
+            .replace(/[\s_-]+/g, '-') // collapse whitespace and replace by -
+            .replace(/^-+|-+$/g, ''); // trim -
+
+        if (slug) {
+            const ext = path.extname(req.file.originalname);
+            const newFilename = `${slug}${ext}`;
+            const oldPath = req.file.path; // full path to uploaded file
+            const newDestPath = path.join(locationsDir, newFilename);
+
+            try {
+                // Move/Rename file
+                fs.renameSync(oldPath, newDestPath);
+                finalPath = `/locations/${newFilename}`;
+            } catch (err) {
+                console.error('Failed to rename/move file:', err);
+                // Fallback to original path if move fails, or error out?
+                // We'll just keep the original valid upload path to not break flow
+            }
+        }
+    }
+
+    res.json({ url: finalPath });
 });
 
 // Get all locations with products
@@ -94,13 +144,13 @@ app.get('/api/cart', async (req, res) => {
 app.post('/api/locations', async (req, res) => {
     try {
         const {
-            name, country, lat, lng,
+            name, country, lat, lng, image, description,
             name_2, name_3, name_4, name_5,
             country_2, country_3, country_4, country_5
         } = req.body;
         const location = await prisma.location.create({
             data: {
-                name, country, lat, lng,
+                name, country, lat, lng, image, description,
                 name_2, name_3, name_4, name_5,
                 country_2, country_3, country_4, country_5
             }
@@ -117,14 +167,14 @@ app.put('/api/locations/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const {
-            name, country, lat, lng,
+            name, country, lat, lng, image, description,
             name_2, name_3, name_4, name_5,
             country_2, country_3, country_4, country_5
         } = req.body;
         const location = await prisma.location.update({
             where: { id },
             data: {
-                name, country, lat, lng,
+                name, country, lat, lng, image, description,
                 name_2, name_3, name_4, name_5,
                 country_2, country_3, country_4, country_5
             }

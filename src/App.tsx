@@ -22,7 +22,7 @@ function Scene() {
   return (
     <>
       <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 3, 5]} intensity={2} />
+      <directionalLight position={[8, 3, 2]} intensity={2} />
 
       <group>
         <Earth />
