@@ -32,23 +32,22 @@ const Marker = React.memo(function Marker({
     location,
     onClick,
     isSelected,
-    hasActiveSelection,
-    language
+    language,
+    hasActiveSelection
 }: {
     location: Location,
     onClick: () => void,
     isSelected: boolean,
-    hasActiveSelection: boolean,
-    language: number
+    language: number,
+    hasActiveSelection: boolean
 }) {
     const ref = useRef<HTMLDivElement>(null)
     const opacityRef = useRef(1)
 
-    // Calculate position on sphere
     const position = useMemo(() => {
         const phi = (90 - location.lat) * (Math.PI / 180)
         const theta = (location.lng + 180) * (Math.PI / 180)
-        const radius = 1.001 // On surface
+        const radius = 1.001
 
         const x = -(radius * Math.sin(phi) * Math.cos(theta))
         const z = (radius * Math.sin(phi) * Math.sin(theta))
@@ -57,29 +56,12 @@ const Marker = React.memo(function Marker({
         return new THREE.Vector3(x, y, z)
     }, [location.lat, location.lng])
 
-    // Manual occlusion/fade logic
     useFrame(({ camera }, delta) => {
         if (!ref.current) return
 
-        // Get vector from camera to object (or just camera position if object is roughly at origin)
-        // Since globe is at 0,0,0, checking dot product of (CameraPos) and (MarkerPos) works well.
-        // Assuming camera orbits around 0,0,0.
-
-        // Normalize positions to get direction vectors
         const camDir = camera.position.clone().normalize()
         const posDir = position.clone().normalize()
-
-        // Dot product: 1 = interaction, 0 = 90 degrees/horizon, -1 = opposite side
         const dot = camDir.dot(posDir)
-
-        // Define fade range
-        // Visible > 0.15
-        // Smoothly fade to 0 between 0.15 and -0.05
-        // Fully hidden < -0.05
-
-        // Let's tweak these:
-        // Start fading earlier to avoid "pop" text
-        // Range: [0.2, -0.1]
 
         let opacity = 0
         if (dot > 0.2) {
@@ -87,10 +69,6 @@ const Marker = React.memo(function Marker({
         } else if (dot < -0.1) {
             opacity = 0
         } else {
-            // Map range [0.2, -0.1] to [1, 0]
-            // Range width = 0.3
-            // Dist from lower bound = dot - (-0.1) = dot + 0.1
-            // Fraction = (dot + 0.1) / 0.3
             opacity = (dot + 0.1) / 0.3
         }
 
@@ -99,14 +77,9 @@ const Marker = React.memo(function Marker({
 
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 7, delta)
 
-        // Apply styling directly for performance
         ref.current.style.opacity = opacityRef.current.toString()
         ref.current.style.pointerEvents = opacityRef.current > 0.2 ? 'auto' : 'none'
-
-        // Scale effect based on selection is already in CSS classes, but we could add more here if needed.
     })
-
-    // Fixed styling for now
 
     return (
         <group position={position}>
@@ -131,7 +104,7 @@ const Marker = React.memo(function Marker({
                     style={{
                         width: '0px',
                         height: '0px',
-                        opacity: 1 // Start visible
+                        opacity: 1
                     }}
                 >
                     {/* The Dot */}

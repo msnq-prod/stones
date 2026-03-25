@@ -1,7 +1,8 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import React, { Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import * as THREE from 'three'
 import { Earth } from './components/Earth'
 import { Markers } from './components/Markers'
 import { CameraController } from './components/CameraController'
@@ -10,11 +11,75 @@ import { AboutSection } from './components/AboutSection'
 import { ProductListSection } from './components/ProductListSection'
 import { LocationInfoSection } from './components/LocationInfoSection'
 import { LoadingScreen } from './components/LoadingScreen'
+import { ScrollToProductsHint } from './components/ScrollToProductsHint'
 import { AdminLayout } from './admin/components/AdminLayout'
 import { Dashboard } from './admin/pages/Dashboard'
 import { Locations } from './admin/pages/Locations'
 import { Products } from './admin/pages/Products'
 import { useStore } from './store'
+
+const INITIAL_CAMERA_POSITION: [number, number, number] = [
+  -1.7057780567874519,
+  2.3921494680329234,
+  -1.902088889503387
+]
+
+const LIGHT_START_LONGITUDE = -40.35
+const LIGHT_ORBIT_RADIUS = 12
+const LIGHT_ORBIT_HEIGHT = 3.5
+const LIGHT_ORBIT_SPEED = 0.08
+const MAIN_SCENE_DPR: [number, number] = [1, 1.25]
+const MAIN_SCENE_FPS = 30
+
+function OrbitingSunLight() {
+  const lightRef = React.useRef<THREE.DirectionalLight>(null)
+
+  useFrame(({ clock }) => {
+    if (!lightRef.current) return
+
+    const angle = ((LIGHT_START_LONGITUDE + 180) * Math.PI) / 180 + clock.getElapsedTime() * LIGHT_ORBIT_SPEED
+    const x = -LIGHT_ORBIT_RADIUS * Math.cos(angle)
+    const z = LIGHT_ORBIT_RADIUS * Math.sin(angle)
+
+    lightRef.current.position.set(x, LIGHT_ORBIT_HEIGHT, z)
+  })
+
+  return <directionalLight ref={lightRef} intensity={2.4} />
+}
+
+function SceneRenderTicker({ fps }: { fps: number }) {
+  const invalidate = useThree((state) => state.invalidate)
+
+  useEffect(() => {
+    const frameDuration = 1000 / fps
+    let animationFrameId = 0
+    let timeoutId: number | undefined
+
+    const scheduleNextFrame = () => {
+      timeoutId = window.setTimeout(() => {
+        animationFrameId = window.requestAnimationFrame(() => {
+          if (!document.hidden) {
+            invalidate()
+          }
+
+          scheduleNextFrame()
+        })
+      }, frameDuration)
+    }
+
+    invalidate()
+    scheduleNextFrame()
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId)
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [fps, invalidate])
+
+  return null
+}
 
 function Scene() {
   const selectedLocation = useStore((state) => state.selectedLocation)
@@ -22,8 +87,8 @@ function Scene() {
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[8, 3, 2]} intensity={2} />
+      <ambientLight intensity={0.35} />
+      <OrbitingSunLight />
 
       <group>
         <Earth />
@@ -38,7 +103,7 @@ function Scene() {
         enableRotate={true}
         rotateSpeed={0.5}
         autoRotate={!selectedLocation}
-        autoRotateSpeed={0.5}
+        autoRotateSpeed={0.15}
         onStart={() => {
           if (useStore.getState().selectedLocation) {
             clearSelection()
@@ -72,12 +137,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const INITIAL_CAMERA_POSITION: [number, number, number] = [
-  -1.7057780567874519,
-  2.3921494680329234,
-  -1.902088889503387
-]
-
 function MainApp() {
   const fetchLocations = useStore((state) => state.fetchLocations)
   const selectedLocation = useStore((state) => state.selectedLocation)
@@ -107,7 +166,14 @@ function MainApp() {
 
       <div className="fixed inset-0 z-0">
         <ErrorBoundary>
-          <Canvas camera={{ position: INITIAL_CAMERA_POSITION, fov: 45 }}>
+          <Canvas
+            camera={{ position: INITIAL_CAMERA_POSITION, fov: 45, near: 0.1, far: 20 }}
+            dpr={MAIN_SCENE_DPR}
+            frameloop="demand"
+            gl={{ antialias: true, powerPreference: 'low-power', stencil: false }}
+            performance={{ min: 0.75 }}
+          >
+            <SceneRenderTicker fps={MAIN_SCENE_FPS} />
             <Suspense fallback={null}>
               <Scene />
             </Suspense>
@@ -117,6 +183,7 @@ function MainApp() {
 
       <div className="relative z-10 pointer-events-none">
         <UIOverlay />
+        <ScrollToProductsHint />
 
         {!selectedLocation && <div className="h-screen pointer-events-none" />}
 

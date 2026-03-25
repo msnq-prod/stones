@@ -2,6 +2,8 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 
 const SALES_EMAIL = 'sales@stones.com';
 const SALES_PASSWORD = 'partner123';
+const MANAGER_EMAIL = 'manager@stones.com';
+const MANAGER_PASSWORD = 'partner123';
 
 type AuthPayload = {
     accessToken: string;
@@ -195,4 +197,15 @@ test('Sales manager can search, edit and process checkout заявки without l
     expect(buyerOrder?.delivery_address).toBe(updatedAddress);
     expect(buyerOrder?.comment).toBe(updatedComment);
     expect(buyerOrder?.internal_note).toBeUndefined();
+});
+
+test('MANAGER can read sales queue through /api/orders', async ({ request }) => {
+    const managerAuth = await loginViaApi(request, MANAGER_EMAIL, MANAGER_PASSWORD);
+    const ordersResponse = await request.get('/api/orders', {
+        headers: {
+            Authorization: `Bearer ${managerAuth.accessToken}`
+        }
+    });
+
+    expect(ordersResponse.ok()).toBeTruthy();
 });

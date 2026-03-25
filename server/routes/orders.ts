@@ -6,7 +6,7 @@ import type { AuthRequest } from '../middleware/auth.ts';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-const STAFF_ROLES = new Set(['ADMIN', 'SALES_MANAGER']);
+const STAFF_ROLES = new Set(['ADMIN', 'MANAGER', 'SALES_MANAGER']);
 const ORDER_STATUS_SET = new Set<OrderStatus>([
     OrderStatus.NEW,
     OrderStatus.IN_PROGRESS,
