@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
+import { notifyTelegramEvent } from '../telegram/notifications.ts';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -251,6 +252,16 @@ router.post('/', async (req: AuthRequest, res) => {
             }
         });
 
+        void notifyTelegramEvent({
+            eventType: 'COLLECTION_REQUEST_CREATED',
+            actorUserId: req.user.id,
+            data: {
+                request_id: created.id,
+                title: created.title,
+                target_user_name: created.target_user?.name
+            }
+        });
+
         res.status(201).json(await withMetrics(created as RequestWithUsers));
     } catch (error) {
         console.error(error);
@@ -322,6 +333,17 @@ router.patch('/:id', async (req: AuthRequest, res) => {
             }
         }
 
+        const existing = await prisma.collectionRequest.findUnique({
+            where: { id },
+            select: {
+                status: true
+            }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Collection request not found' });
+        }
+
         const updated = await prisma.collectionRequest.update({
             where: { id },
             data: updateData,
@@ -342,6 +364,19 @@ router.patch('/:id', async (req: AuthRequest, res) => {
                 }
             }
         });
+
+        if (updated.status !== existing.status) {
+            void notifyTelegramEvent({
+                eventType: 'COLLECTION_REQUEST_STATUS_CHANGED',
+                actorUserId: req.user.id,
+                data: {
+                    request_id: updated.id,
+                    request_status: updated.status,
+                    title: updated.title,
+                    target_user_name: updated.target_user?.name
+                }
+            });
+        }
 
         res.json(await withMetrics(updated as RequestWithUsers));
     } catch (error) {
@@ -393,6 +428,19 @@ router.post('/:id/ack', async (req: AuthRequest, res) => {
                 }
             }
         });
+
+        if (updated.status !== existing.status) {
+            void notifyTelegramEvent({
+                eventType: 'COLLECTION_REQUEST_STATUS_CHANGED',
+                actorUserId: req.user.id,
+                data: {
+                    request_id: updated.id,
+                    request_status: updated.status,
+                    title: updated.title,
+                    target_user_name: updated.target_user?.name
+                }
+            });
+        }
 
         res.json(await withMetrics(updated as RequestWithUsers));
     } catch (error) {

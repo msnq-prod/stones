@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
 import { buildCloneUrl, buildQrUrl } from '../utils/cloneUrls.ts';
+import { notifyTelegramEvent } from '../telegram/notifications.ts';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -147,7 +148,17 @@ router.post('/:id/send', authenticateToken, async (req: AuthRequest, res) => {
 
     try {
         if (!req.user) return res.sendStatus(401);
-        const batch = await prisma.batch.findUnique({ where: { id }, include: { items: true } });
+        const batch = await prisma.batch.findUnique({
+            where: { id },
+            include: {
+                items: true,
+                owner: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
         if (!batch) return res.status(404).json({ error: 'Batch not found' });
 
         if (req.user.role === 'FRANCHISEE' && batch.owner_id !== req.user.id) {
@@ -167,6 +178,16 @@ router.post('/:id/send', authenticateToken, async (req: AuthRequest, res) => {
             data: { status: 'TRANSIT' }
         });
 
+        void notifyTelegramEvent({
+            eventType: 'BATCH_STATUS_CHANGED',
+            actorUserId: req.user.id,
+            data: {
+                batch_id: updatedBatch.id,
+                batch_status: updatedBatch.status,
+                owner_name: batch.owner.name
+            }
+        });
+
         res.json(updatedBatch);
     } catch (_error) {
         res.status(500).json({ error: 'Failed to send batch' });
@@ -183,7 +204,16 @@ router.post('/:id/receive', authenticateToken, async (req: AuthRequest, res) => 
     }
 
     try {
-        const batch = await prisma.batch.findUnique({ where: { id } });
+        const batch = await prisma.batch.findUnique({
+            where: { id },
+            include: {
+                owner: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
         if (!batch) return res.status(404).json({ error: 'Batch not found' });
 
         if (batch.status !== 'TRANSIT') {
@@ -194,6 +224,16 @@ router.post('/:id/receive', authenticateToken, async (req: AuthRequest, res) => 
         const updatedBatch = await prisma.batch.update({
             where: { id },
             data: { status: 'RECEIVED' }
+        });
+
+        void notifyTelegramEvent({
+            eventType: 'BATCH_STATUS_CHANGED',
+            actorUserId: req.user.id,
+            data: {
+                batch_id: updatedBatch.id,
+                batch_status: updatedBatch.status,
+                owner_name: batch.owner.name
+            }
         });
 
         res.json(updatedBatch);

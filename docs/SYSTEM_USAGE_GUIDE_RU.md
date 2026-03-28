@@ -134,6 +134,10 @@ npm run test:e2e
 - `FRANCHISEE`
   - доступ в `/partner`
   - создание партий, просмотр финансов
+- `ADMIN`, `MANAGER`, `SALES_MANAGER`, `FRANCHISEE`
+  - могут привязать личный Telegram для системных уведомлений
+- `ADMIN`, `MANAGER`
+  - управляют правилами Telegram-уведомлений в `/admin/telegram-bot`
 - Публичный пользователь
   - доступ на `/`
   - просмотр локаций/товаров, регистрация по `username + password`, оформление заказа
@@ -178,6 +182,17 @@ npm run test:e2e
   - `NEW -> IN_PROGRESS`
   - `IN_PROGRESS -> COMPLETED`
   - `NEW|IN_PROGRESS -> CANCELLED`
+
+### Раздел `Бот в ТГ`
+
+Раздел `/admin/telegram-bot` доступен ролям `ADMIN` и `MANAGER`.
+
+Возможности:
+- видеть статус Telegram-бота и наличие `TELEGRAM_BOT_TOKEN`;
+- включать и отключать уведомления по событиям и ролям;
+- редактировать шаблоны сообщений с placeholders;
+- видеть количество активных Telegram-привязок по ролям;
+- привязать или перепривязать собственный Telegram через одноразовую ссылку в бота.
 
 ## 8.4 Locations
 
@@ -234,6 +249,7 @@ npm run test:e2e
 - партии в пути (`TRANSIT`);
 - завершенные партии (`FINISHED`);
 - таблицу последних партий.
+- блок привязки личного Telegram для уведомлений.
 
 Есть быстрые кнопки:
 - `New Batch`
@@ -330,6 +346,13 @@ Checkout flow:
   - `GET /api/orders/my` (`internal_note` скрыт)
   - `GET /api/orders` (`q`, `status`)
   - `PATCH /api/orders/:id` (`status`, `delivery_address`, `contact_phone`, `contact_email`, `comment`, `internal_note`)
+- Telegram:
+  - `GET /api/telegram/status`
+  - `GET /api/telegram/rules`
+  - `PUT /api/telegram/rules/:id`
+  - `POST /api/telegram/link-token`
+  - `GET /api/telegram/me`
+  - `DELETE /api/telegram/me`
 - Logistics:
   - `GET /api/batches`
   - `POST /api/batches`

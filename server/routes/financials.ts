@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { NextFunction, Response } from 'express';
 import type { AuthRequest } from '../middleware/auth.ts';
+import { notifyTelegramEvent } from '../telegram/notifications.ts';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -84,7 +85,20 @@ router.post('/items/:itemId/allocate', async (req: AuthRequest, res) => {
     // channel: 'OFFLINE_POINT' | 'MARKETPLACE' | 'DIRECT_SITE'
 
     try {
-        const item = await prisma.item.findUnique({ where: { id: itemId } });
+        const item = await prisma.item.findUnique({
+            where: { id: itemId },
+            include: {
+                batch: {
+                    include: {
+                        owner: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
         if (!item) return res.status(404).json({ error: 'Item not found' });
 
         if (item.status !== 'STOCK_HQ') {
@@ -130,6 +144,17 @@ router.post('/items/:itemId/allocate', async (req: AuthRequest, res) => {
         const updatedItem = await prisma.item.update({
             where: { id: itemId },
             data: updateData
+        });
+
+        void notifyTelegramEvent({
+            eventType: 'ITEM_ALLOCATED',
+            actorUserId: req.user.id,
+            data: {
+                item_id: updatedItem.id,
+                temp_id: item.temp_id,
+                item_status: updatedItem.status,
+                owner_name: item.batch.owner.name
+            }
         });
 
         res.json(updatedItem);

@@ -2,6 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { PencilLine, RefreshCw, Save, Search, X } from 'lucide-react';
 import { authFetch } from '../../utils/authFetch';
 import { formatRub } from '../../utils/currency';
+import { TelegramLinkCard } from '../../components/TelegramLinkCard';
 
 type OrderFilter = 'ACTIVE' | 'NEW' | 'IN_PROGRESS' | 'CLOSED';
 type OrderStatus = 'NEW' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
@@ -369,6 +370,8 @@ export function Orders() {
                     {error}
                 </div>
             )}
+
+            <TelegramLinkCard theme="dark" />
 
             <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 <SummaryCard title="Активные" value={summary.active} />

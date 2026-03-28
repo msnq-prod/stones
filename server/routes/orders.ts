@@ -2,6 +2,7 @@ import express from 'express';
 import { OrderStatus, Prisma, PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
+import { notifyTelegramEvent } from '../telegram/notifications.ts';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -235,6 +236,17 @@ router.post('/', async (req: AuthRequest, res) => {
             include: orderInclude
         });
 
+        void notifyTelegramEvent({
+            eventType: 'ORDER_CREATED',
+            actorUserId: req.user.id,
+            data: {
+                order_id: created.id,
+                customer_name: created.user?.name,
+                total: Number(created.total),
+                delivery_address: created.delivery_address
+            }
+        });
+
         res.status(201).json(serializeCustomerOrder(created));
     } catch (error) {
         if (error instanceof Error && error.message === 'INVALID_ORDER_ITEMS') {
@@ -360,6 +372,19 @@ router.patch('/:id', async (req: AuthRequest, res) => {
             data,
             include: orderInclude
         });
+
+        if (updated.status !== existing.status) {
+            void notifyTelegramEvent({
+                eventType: 'ORDER_STATUS_CHANGED',
+                actorUserId: req.user.id,
+                data: {
+                    order_id: updated.id,
+                    order_status: updated.status,
+                    customer_name: updated.user?.name,
+                    total: Number(updated.total)
+                }
+            });
+        }
 
         res.json(serializeSalesOrder(updated));
     } catch (error) {

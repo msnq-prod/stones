@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { DEFAULT_CLONE_PAGE_CONTENT } from '../src/shared/clonePageContent.ts';
+import { DEFAULT_TELEGRAM_RULES } from '../server/telegram/config.ts';
 
 const db = new PrismaClient();
 
@@ -53,6 +54,9 @@ async function main() {
         db.order.deleteMany(),
         db.ledger.deleteMany(),
         db.auditLog.deleteMany(),
+        db.telegramLinkToken.deleteMany(),
+        db.telegramConnection.deleteMany(),
+        db.telegramNotificationRule.deleteMany(),
         db.item.deleteMany(),
         db.batch.deleteMany(),
         db.productTranslation.deleteMany(),
@@ -72,6 +76,12 @@ async function main() {
         } else {
             throw error;
         }
+    }
+
+    for (const rule of DEFAULT_TELEGRAM_RULES) {
+        await db.telegramNotificationRule.create({
+            data: rule
+        });
     }
 
     // 3) Categories (Russian naming for both visible languages in test UI)

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Box, Truck, Users, FileText, Archive, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, MapPin, Box, Truck, Users, FileText, Archive, ShoppingCart, Bot } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { clearAuthSession } from '../../utils/session';
 
@@ -47,6 +47,7 @@ export function Sidebar() {
 
                         <div className="pt-4 pb-2 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Система</div>
                         <NavItem to="/admin/users" icon={<Users size={20} />} label="Пользователи" active={location.pathname === '/admin/users'} />
+                        <NavItem to="/admin/telegram-bot" icon={<Bot size={20} />} label="Бот в ТГ" active={location.pathname === '/admin/telegram-bot'} />
                     </>
                 )}
             </nav>

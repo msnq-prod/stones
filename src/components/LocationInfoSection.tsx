@@ -3,7 +3,8 @@ import { useStore } from '../store';
 import { getLocalizedValue } from '../utils/language';
 
 export function LocationInfoSection() {
-    const { selectedLocation, language } = useStore();
+    const selectedLocation = useStore((state) => state.selectedLocation);
+    const language = useStore((state) => state.language);
 
     if (!selectedLocation) return null;
 

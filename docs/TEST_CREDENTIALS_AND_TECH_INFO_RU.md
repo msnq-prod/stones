@@ -16,6 +16,7 @@
 DATABASE_URL="mysql://root@127.0.0.1:3307/stones?connection_limit=20&pool_timeout=30"
 ACCESS_TOKEN_SECRET="access_secret_123"
 REFRESH_TOKEN_SECRET="refresh_secret_123"
+TELEGRAM_BOT_TOKEN=""
 ```
 
 ## 4. Быстрый запуск
@@ -66,6 +67,7 @@ npm run dev
 - Приемка: `/admin/acceptance`
 - Аллокация: `/admin/allocation`
 - Пользователи: `/admin/users`
+- Бот в ТГ: `/admin/telegram-bot`
 - Редактор страницы цифрового двойника: `/admin/clone-content`
 
 ## 7. API, которые чаще всего нужны во время тестов
@@ -80,6 +82,12 @@ npm run dev
 - `GET /api/orders/my`
 - `GET /api/orders`
 - `PATCH /api/orders/:id`
+- `GET /api/telegram/status`
+- `GET /api/telegram/rules`
+- `PUT /api/telegram/rules/:id`
+- `POST /api/telegram/link-token`
+- `GET /api/telegram/me`
+- `DELETE /api/telegram/me`
 
 Операции партнёра и HQ:
 - `GET /api/batches`
@@ -140,7 +148,15 @@ npm run dev
 4. Открыть `/clone/:publicToken`.
 5. Проверить QR-картинку через `GET /api/public/items/:publicToken/qr`.
 
-## 10. Известный нюанс текущей БД
+## 10. Проверка Telegram-бота (быстрый сценарий)
+1. Заполнить `TELEGRAM_BOT_TOKEN` в `.env` и перезапустить сервер.
+2. Войти как `admin@stones.com / admin123` или `manager@stones.com / partner123`.
+3. Открыть `/admin/telegram-bot` и сгенерировать ссылку привязки.
+4. Перейти по deep-link в Telegram и отправить `/start`.
+5. Вернуться в UI и проверить, что привязка стала активной.
+6. Создать заказ или сменить статус партии и убедиться, что уведомление пришло в Telegram.
+
+## 11. Известный нюанс текущей БД
 Если в локальной БД нет таблицы `content_pages`, сид не падает: блок сидирования контента цифрового двойника пропускается с предупреждением.
 
 Отдельный нюанс checkout:

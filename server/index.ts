@@ -18,6 +18,8 @@ import uploadRoutes from './routes/upload.ts';
 import contentRoutes from './routes/content.ts';
 import collectionRequestsRoutes from './routes/collectionRequests.ts';
 import ordersRoutes from './routes/orders.ts';
+import telegramRoutes from './routes/telegram.ts';
+import { telegramBot } from './telegram/bot.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +93,7 @@ app.use('/api/public', publicRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/collection-requests', collectionRequestsRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 app.use('/api/upload', uploadRoutes);
 
@@ -406,4 +409,5 @@ app.get('/api/languages', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
+    void telegramBot.start();
 });

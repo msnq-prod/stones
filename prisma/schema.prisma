@@ -216,6 +216,25 @@ enum CollectionRequestStatus {
   CANCELLED
 }
 
+enum NotificationEventType {
+  ORDER_CREATED
+  ORDER_STATUS_CHANGED
+  BATCH_STATUS_CHANGED
+  BATCH_ACCEPTANCE_FINISHED
+  ITEM_REJECTED
+  COLLECTION_REQUEST_CREATED
+  COLLECTION_REQUEST_STATUS_CHANGED
+  ITEM_ALLOCATED
+}
+
+enum NotificationRoleTarget {
+  ADMIN
+  MANAGER
+  SALES_MANAGER
+  FRANCHISEE
+  ALL_STAFF
+}
+
 model User {
   id              String   @id @default(uuid())
   name            String
@@ -236,6 +255,8 @@ model User {
   audit_logs                  AuditLog[]
   created_collection_requests CollectionRequest[] @relation("CollectionRequestCreatedBy")
   target_collection_requests  CollectionRequest[] @relation("CollectionRequestTargetUser")
+  telegram_connections        TelegramConnection[]
+  telegram_link_tokens        TelegramLinkToken[]
 
   @@map("users")
 }
@@ -338,4 +359,53 @@ model CollectionRequest {
   @@index([status])
   @@index([created_at])
   @@map("collection_requests")
+}
+
+model TelegramConnection {
+  id               String   @id @default(uuid())
+  user_id          String   @unique
+  telegram_user_id String   @unique
+  chat_id          String   @unique
+  username         String?
+  first_name       String?
+  last_name        String?
+  is_active        Boolean  @default(true)
+  linked_at        DateTime @default(now())
+  last_seen_at     DateTime @default(now())
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([is_active])
+  @@map("telegram_connections")
+}
+
+model TelegramLinkToken {
+  id         String   @id @default(uuid())
+  user_id    String
+  token_hash String   @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@map("telegram_link_tokens")
+}
+
+model TelegramNotificationRule {
+  id               String                 @id @default(uuid())
+  event_type       NotificationEventType
+  target_role      NotificationRoleTarget
+  enabled          Boolean                @default(false)
+  message_template String                 @db.Text
+  created_at       DateTime               @default(now())
+  updated_at       DateTime               @updatedAt
+
+  @@unique([event_type, target_role])
+  @@index([target_role])
+  @@map("telegram_notification_rules")
 }

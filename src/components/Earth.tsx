@@ -1,22 +1,17 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store'
 
 export function Earth() {
+    const globeRef = useRef<THREE.Mesh>(null)
     const selectedLocation = useStore((state) => state.selectedLocation)
     const clearSelection = useStore((state) => state.clearSelection)
 
-    const [colorMap, normalMap] = useTexture(
-        [
-            '/textures/earth_daymap.jpg',
-            '/textures/earth_normal_map.jpg'
-        ],
-        ([loadedColorMap]) => {
-            loadedColorMap.colorSpace = THREE.SRGBColorSpace
-            loadedColorMap.needsUpdate = true
-        }
-    )
+    const [colorMap, normalMap] = useTexture([
+        '/textures/earth_daymap.jpg',
+        '/textures/earth_normal_map.jpg'
+    ])
 
     // Rotation is now handled by OrbitControls autoRotate in App.tsx to ensure sync with markers
     // useFrame((_, delta) => {
@@ -29,6 +24,7 @@ export function Earth() {
         <group>
             {/* Earth Sphere */}
             <mesh
+                ref={globeRef}
                 rotation={[0, 0, 0]}
                 onClick={(event) => {
                     if (!selectedLocation) return
@@ -41,9 +37,6 @@ export function Earth() {
                 <meshStandardMaterial
                     map={colorMap}
                     normalMap={normalMap}
-                    emissiveMap={colorMap}
-                    emissive="#1b2533"
-                    emissiveIntensity={0.18}
                     metalness={0.1}
                     roughness={0.7}
                 />
@@ -59,11 +52,11 @@ function AtmosphereSprite() {
     // Generate glow texture only once
     const texture = React.useMemo(() => {
         const canvas = document.createElement('canvas')
-        canvas.width = 256
-        canvas.height = 256
+        canvas.width = 512
+        canvas.height = 512
         const context = canvas.getContext('2d')!
 
-        const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128)
+        const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256)
 
         // Scale 2.5 -> Radius 1.25. Surface (R=1) is at 1/1.25 = 0.8
 
@@ -79,21 +72,10 @@ function AtmosphereSprite() {
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
 
         context.fillStyle = gradient
-        context.fillRect(0, 0, 256, 256)
+        context.fillRect(0, 0, 512, 512)
 
-        const atmosphereTexture = new THREE.CanvasTexture(canvas)
-        atmosphereTexture.generateMipmaps = false
-        atmosphereTexture.minFilter = THREE.LinearFilter
-        atmosphereTexture.magFilter = THREE.LinearFilter
-
-        return atmosphereTexture
+        return new THREE.CanvasTexture(canvas)
     }, [])
-
-    React.useEffect(() => {
-        return () => {
-            texture.dispose()
-        }
-    }, [texture])
 
     return (
         <sprite scale={[2.5, 2.5, 1]}>

@@ -6,7 +6,9 @@ import { formatRub } from '../utils/currency';
 import { MarketplaceButtons } from './MarketplaceButtons';
 
 export function ProductListSection() {
-    const { selectedLocation, addToCart, language } = useStore();
+    const selectedLocation = useStore((state) => state.selectedLocation);
+    const addToCart = useStore((state) => state.addToCart);
+    const language = useStore((state) => state.language);
 
     if (!selectedLocation || !selectedLocation.products) return null;
 
@@ -37,7 +39,13 @@ function ProductCard({ product, addToCart, language }: { product: Product, addTo
             className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/50 transition-all duration-300 hover:border-blue-500/50"
         >
             <div className="aspect-[4/3] overflow-hidden relative">
-                <img src={product.image} alt={name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img
+                    src={product.image}
+                    alt={name}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
             </div>
             <div className="flex flex-1 flex-col p-6">

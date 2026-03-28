@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { NextFunction, Response } from 'express';
 import type { AuthRequest } from '../middleware/auth.ts';
+import { notifyTelegramEvent } from '../telegram/notifications.ts';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -57,6 +58,9 @@ router.post('/items/:itemId/reject', async (req: AuthRequest, res) => {
             where: { id: itemId },
             data: {
                 status: 'REJECTED'
+            },
+            include: {
+                batch: true
             }
         });
 
@@ -66,6 +70,18 @@ router.post('/items/:itemId/reject', async (req: AuthRequest, res) => {
                 user_id: req.user.id,
                 action: 'ITEM_REJECTED',
                 details: { itemId, reason, batchId: item.batch_id }
+            }
+        });
+
+        void notifyTelegramEvent({
+            eventType: 'ITEM_REJECTED',
+            actorUserId: req.user.id,
+            data: {
+                batch_id: item.batch_id,
+                item_id: item.id,
+                temp_id: item.temp_id,
+                item_status: item.status,
+                reason
             }
         });
 
@@ -100,7 +116,14 @@ router.post('/batches/:batchId/finish', async (req: AuthRequest, res) => {
     try {
         const batch = await prisma.batch.findUnique({
             where: { id: batchId },
-            include: { items: true }
+            include: {
+                items: true,
+                owner: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
         });
         if (!batch) return res.status(404).json({ error: 'Batch not found' });
 
@@ -116,6 +139,26 @@ router.post('/batches/:batchId/finish', async (req: AuthRequest, res) => {
         const updatedBatch = await prisma.batch.update({
             where: { id: batchId },
             data: { status: 'FINISHED' }
+        });
+
+        void notifyTelegramEvent({
+            eventType: 'BATCH_STATUS_CHANGED',
+            actorUserId: req.user.id,
+            data: {
+                batch_id: updatedBatch.id,
+                batch_status: updatedBatch.status,
+                owner_name: batch.owner.name
+            }
+        });
+
+        void notifyTelegramEvent({
+            eventType: 'BATCH_ACCEPTANCE_FINISHED',
+            actorUserId: req.user.id,
+            data: {
+                batch_id: updatedBatch.id,
+                batch_status: updatedBatch.status,
+                owner_name: batch.owner.name
+            }
         });
 
         res.json(updatedBatch);

@@ -3,6 +3,7 @@ import { Package, Truck, PlusCircle, Wallet, Copy, Check, FileText, Activity } f
 import { Link } from 'react-router-dom';
 import { formatRub } from '../../utils/currency';
 import { authFetch } from '../../utils/authFetch';
+import { TelegramLinkCard } from '../../components/TelegramLinkCard';
 
 type BatchItem = {
     id: string;
@@ -176,6 +177,8 @@ export function Dashboard() {
                     {error}
                 </div>
             )}
+
+            <TelegramLinkCard theme="light" />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-blue-800 p-6 rounded-2xl shadow-xl shadow-blue-900/10 flex flex-col justify-between relative overflow-hidden group">
